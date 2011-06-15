@@ -22,12 +22,16 @@ Step 3
 
 Includes the `node-mongodb-native` driver. Performs a simple insert of IP and Timestamp whenever the URL is visited. There's no routing, just a simple increment.
 
+See the `record_visit` function for implementation details.
+
 Step 4
 ------
 
 Extend step 3 with a /history option that will print the 10 most recent visits.
 
-To test visit `my_app_name.cloudfoundry.com/history`
+To test visit `my_app_name.cloudfoundry.com/history`.
+
+See the `print_visits` function for implementation details.
 
 Step 5
 ------

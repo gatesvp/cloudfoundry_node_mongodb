@@ -33,13 +33,17 @@ db.open(function(err, conn) {
   db.authenticate(mongo.username, mongo.password, function(err, success) {
     http.createServer(function (req, res) {
 
+      /* Retrieve the 'ips' collection
+         MongoDB will create the collection if needed. */
       conn.collection('ips', function(err, collection){
+        /* Simple object to insert: ip address and date */
         ip = req.connection.remoteAddress;
         ts = new Date();
         object_to_insert = { 'ip': ip, 'ts': ts };
 
+        /* Insert the object then print in response */
+        /* Note the _id has been created */
         collection.insert( object_to_insert );
-
         res.writeHead(200, {'Content-Type': 'text/plain'});
         res.write(JSON.stringify(object_to_insert));
         res.end('\n');

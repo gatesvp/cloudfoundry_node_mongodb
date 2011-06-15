@@ -10,19 +10,26 @@ Step 1
 
 Gets a basic "Hello World" functioning on Cloud Foundry.
 
+To test visit `my_app_name.cloudfoundry.com`.
+
 Step 2
 ------
 
-Add parsing and printing of MongoDB environment variables.
-
-The output of this function should allow you to connect to the server from the command line.
+Add parsing and printing of MongoDB environment variables. See the `generate_mongo_url` function. The output of this function is a "connection string" to the local MongoDB instance. Note the relatively naive implementation.
 
 Step 3
 ------
 
-Includes the `node-mongodb-native` driver. Performs a simple insert of IP and Timestamp whenever the page is visited.
+Includes the `node-mongodb-native` driver. Performs a simple insert of IP and Timestamp whenever the URL is visited. There's no routing, just a simple increment.
 
 Step 4
 ------
 
 Extend step 3 with a /history option that will print the 10 most recent visits.
+
+To test visit `my_app_name.cloudfoundry.com/history`
+
+Step 5
+------
+
+For building a better a UI, take a look at the `express` framework. (expressjs.org)

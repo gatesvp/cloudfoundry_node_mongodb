@@ -3,7 +3,6 @@ require.paths.unshift('./node_modules');
 if(process.env.VCAP_SERVICES){
   var env = JSON.parse(process.env.VCAP_SERVICES);
   var mongo = env['mongodb-1.8'][0]['credentials'];
-  mongo.db = "visits";
 }
 else{
   var mongo = {
@@ -12,7 +11,7 @@ else{
     "username":"",
     "password":"", 
     "name":"",
-    "db":"visits"
+    "db":""
   }
 }
 
@@ -22,27 +21,21 @@ var generate_mongo_url = function(obj){
   obj.db = (obj.db || 'test');
 
   if(obj.username && obj.password){
-    return "mongo://" + obj.username + ":" + obj.password + "@" + obj.hostname + ":" + obj.port + "/" + obj.db;
+    return "mongodb://" + obj.username + ":" + obj.password + "@" + obj.hostname + ":" + obj.port + "/" + obj.db;
   }
   else{
-    return "mongo://" + obj.hostname + ":" + obj.port + "/" + obj.db;
+    return "mongodb://" + obj.hostname + ":" + obj.port + "/" + obj.db;
   }
 }
 
 var mongourl = generate_mongo_url(mongo);
-
-/* Mongo Variables */
-var Db = require('mongodb').Db,
-  Connection = require('mongodb').Connection,
-  Server = require('mongodb').Server,
-  BSON = require('mongodb').BSONNative;
 
 /* Http Variables */
 var port = (process.env.VMC_APP_PORT || 3000);
 var host = (process.env.VCAP_APP_HOST || 'localhost');
 var http = require('http');
 
-var record_visit = function(req, res, db){
+var record_visit = function(req, res){
   /* Connect to the DB and auth */
   require('mongodb').connect(mongourl, function(err, conn){
     conn.collection('ips', function(err, coll){
@@ -61,11 +54,11 @@ var record_visit = function(req, res, db){
   });
 }
 
-var print_visits = function(req, res, db){
+var print_visits = function(req, res){
   /* Connect to the DB and auth */
   require('mongodb').connect(mongourl, function(err, conn){
     conn.collection('ips', function(err, coll){
-      coll.find({}, {limit:5, sort:[['_id','desc']]}, function(err, cursor){
+      coll.find({}, {limit:10, sort:[['_id','desc']]}, function(err, cursor){
         cursor.toArray(function(err, items){
           res.writeHead(200, {'Content-Type': 'text/plain'});
           for(i=0; i<items.length;i++){
@@ -80,13 +73,12 @@ var print_visits = function(req, res, db){
 
 http.createServer(function (req, res) {
   params = require('url').parse(req.url);
-  var db = new Db('visits', new Server(mongo.hostname, mongo.port, {}), {} );
 
   if(params.pathname === '/history') {
-    print_visits(req, res, db);
+    print_visits(req, res);
   }
   else{
-    record_visit(req, res, db);
+    record_visit(req, res);
   }
 
 }).listen(port, host);

@@ -9,45 +9,51 @@ else{
     "hostname":"localhost",
     "port":27017,
     "username":"",
-    "password":"", 
+    "password":"",
     "name":"",
-    "db":"db"
+    "db":""
   }
 }
 
-/* Mongo Variables */
-var Db = require('mongodb').Db,
-  Connection = require('mongodb').Connection,
-  Server = require('mongodb').Server,
-  BSON = require('mongodb').BSONNative;
+var generate_mongo_url = function(obj){
+  obj.hostname = (obj.hostname || 'localhost');
+  obj.port = (obj.port || 27017);
+  obj.db = (obj.db || 'test');
 
-var db = new Db('visits', new Server(mongo.hostname, mongo.port, {}), {} );
+  if(obj.username && obj.password){
+    return "mongodb://" + obj.username + ":" + obj.password + "@" + obj.hostname + ":" + obj.port + "/" + obj.db + "?auto_reconnect=true";
+  }
+  else{
+    return "mongodb://" + obj.hostname + ":" + obj.port + "/" + obj.db;
+  }
+}
+
+var mongourl = generate_mongo_url(mongo);
 
 /* Http Variables */
 var port = (process.env.VMC_APP_PORT || 3000);
 var host = (process.env.VCAP_APP_HOST || 'localhost');
 var http = require('http');
 
-/* Connect to the DB, auth and start web server */
-db.open(function(err, conn) {
-  db.authenticate(mongo.username, mongo.password, function(err, success) {
-    http.createServer(function (req, res) {
+var record_visit = function(req, res){
+  /* Connect to the DB and auth */
+  require('mongodb').connect(mongourl, function(err, conn){
+    conn.collection('ips', function(err, coll){
+      /* Simple object to insert: ip address and date */
+      object_to_insert = { 'ip': req.connection.remoteAddress, 'ts': new Date() };
 
-      /* Retrieve the 'ips' collection
-         MongoDB will create the collection if needed. */
-      conn.collection('ips', function(err, collection){
-        /* Simple object to insert: ip address and date */
-        ip = req.connection.remoteAddress;
-        ts = new Date();
-        object_to_insert = { 'ip': ip, 'ts': ts };
-
-        /* Insert the object then print in response */
-        /* Note the _id has been created */
-        collection.insert( object_to_insert );
+      /* Insert the object then print in response */
+      /* Note the _id has been created */
+      coll.insert( object_to_insert, {safe:true}, function(err){
         res.writeHead(200, {'Content-Type': 'text/plain'});
         res.write(JSON.stringify(object_to_insert));
         res.end('\n');
       });
-    }).listen(port, host);
+    });
   });
-});
+}
+
+http.createServer(function (req, res) {
+  record_visit(req, res);
+}).listen(port, host);
+
